@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSV Auto Database Builder</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #output { margin-top: 20px; white-space: pre-wrap; }
+        .box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-top: 20px;
+            width: 600px;
+            background: #f8f8f8;
+        }
+        h3 { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<h2>Upload Multiple CSV Files</h2>
+
+<input type="file" id="fileInput" multiple />
+<button onclick="uploadFiles()">Upload</button>
+
+<div id="output"></div>
+
+<script>
+async function uploadFiles() {
+    const files = document.getElementById("fileInput").files;
+
+    if (files.length === 0) {
+        alert("Please select at least one CSV file.");
+        return;
+    }
+
+    let formData = new FormData();
+
+    for (let f of files) {
+        formData.append("files", f);
+    }
+
+    const response = await fetch("http://127.0.0.1:8000/upload-multiple", {
+        method: "POST",
+        body: formData
+    });
+
+    const result = await response.json();
+
+    document.getElementById("output").innerHTML = `
+        <div class="box">
+            <h3>Tables Created:</h3>
+            ${JSON.stringify(result.tables_created, null, 2)}
+        </div>
+
+        <div class="box">
+            <h3>Primary Keys Detected:</h3>
+            ${JSON.stringify(result.primary_keys, null, 2)}
+        </div>
+
+        <div class="box">
+            <h3>Foreign Key Relationships:</h3>
+            ${JSON.stringify(result.foreign_keys, null, 2)}
+        </div>
+    `;
+}
+</script>
+
+</body>
+</html>

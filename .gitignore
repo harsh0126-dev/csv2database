@@ -1,0 +1,68 @@
+# ==========================
+# Python Bytecode
+# ==========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ==========================
+# Virtual Environments
+# ==========================
+venv/
+env/
+.venv/
+ENV/
+
+# ==========================
+# FastAPI / App Uploads
+# (Your CSV uploads folder)
+# ==========================
+uploads/
+*.csv
+*.xlsx
+
+# ==========================
+# Environment Variables
+# (VERY IMPORTANT — secrets)
+# ==========================
+.env
+.env.local
+.env.*.local
+
+# ==========================
+# IDE Settings
+# ==========================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ==========================
+# System Files
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Logs
+# ==========================
+*.log
+
+# ==========================
+# Pytest / Coverage
+# ==========================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==========================
+# Jupyter (if any)
+# ==========================
+.ipynb_checkpoints/
+
+# ==========================
+# SQLAlchemy Cache / Migrations (if used)
+# ==========================
+alembic/
+migrations/
