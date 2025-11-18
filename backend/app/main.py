@@ -43,3 +43,4 @@ async def upload_multiple(files: list[UploadFile] = File(...)):
     except Exception as e:
         traceback.print_exc()  # <──── REAL ERROR PRINTED HERE
         raise HTTPException(status_code=500, detail=str(e))
+#hi harsh
