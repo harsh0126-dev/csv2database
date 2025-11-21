@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CSV Auto Database Builder</title>
+    <title>CSV / Excel / Google Sheet → SQL</title>
     <style>
         body { font-family: Arial; padding: 20px; }
         #output { margin-top: 20px; white-space: pre-wrap; }
@@ -17,10 +17,18 @@
 </head>
 <body>
 
-<h2>Upload Multiple CSV Files</h2>
+<h2>Upload CSV and Excel Files</h2>
 
 <input type="file" id="fileInput" multiple />
-<button onclick="uploadFiles()">Upload</button>
+<br><br>
+
+<h2>OR Load Google Sheet</h2>
+<input type="text" id="sheetUrl" placeholder="Paste Google Sheet URL" style="width: 400px;">
+<input type="text" id="sheetName" placeholder="Table name" style="width: 200px;">
+<button onclick="uploadSheet()">Upload Sheet</button>
+
+<br><br>
+<button onclick="uploadFiles()">Upload Selected CSV/Excel</button>
 
 <div id="output"></div>
 
@@ -29,7 +37,7 @@ async function uploadFiles() {
     const files = document.getElementById("fileInput").files;
 
     if (files.length === 0) {
-        alert("Please select at least one CSV file.");
+        alert("Please select at least one file.");
         return;
     }
 
@@ -45,21 +53,43 @@ async function uploadFiles() {
     });
 
     const result = await response.json();
+    showOutput(result);
+}
 
+async function uploadSheet() {
+    const url = document.getElementById("sheetUrl").value.trim();
+    const name = document.getElementById("sheetName").value.trim();
+
+    if (!url || !name) {
+        alert("Enter BOTH Sheet URL and Table Name");
+        return;
+    }
+
+    // Trick: send the sheet URL as filename
+    const file = new File(["dummy"], url);
+
+    let formData = new FormData();
+    formData.append("files", file, name + ".gsheet");
+
+    const response = await fetch("http://127.0.0.1:8000/upload-multiple", {
+        method: "POST",
+        body: formData
+    });
+
+    const result = await response.json();
+    showOutput(result);
+}
+
+function showOutput(result) {
     document.getElementById("output").innerHTML = `
         <div class="box">
-            <h3>Tables Created:</h3>
-            ${JSON.stringify(result.tables_created, null, 2)}
+            <h3>Tables Written:</h3>
+            ${JSON.stringify(result.tables_written, null, 2)}
         </div>
 
         <div class="box">
-            <h3>Primary Keys Detected:</h3>
+            <h3>Primary Keys:</h3>
             ${JSON.stringify(result.primary_keys, null, 2)}
-        </div>
-
-        <div class="box">
-            <h3>Foreign Key Relationships:</h3>
-            ${JSON.stringify(result.foreign_keys, null, 2)}
         </div>
     `;
 }

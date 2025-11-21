@@ -8,31 +8,32 @@ DTYPE_MAP = {
     "object": "TEXT",
 }
 
+
 def pandas_dtype_to_sql(dtype):
     return DTYPE_MAP.get(str(dtype), "TEXT")
 
 
-# ----------------------------------------------------------
-# 🔥 PRIMARY KEY DETECTION
-# ----------------------------------------------------------
+# ===================================================================
+# 📌 Detect potential primary key (NOT final)
+# ===================================================================
 def detect_primary_key(df: pd.DataFrame):
-    num_rows = len(df)
     candidates = []
+    num_rows = len(df)
 
     for col in df.columns:
-        series = df[col]
+        s = df[col]
         score = 0
 
-        if series.nunique(dropna=True) == num_rows:
+        if s.nunique(dropna=True) == num_rows:
             score += 10
 
-        if series.isnull().sum() == 0:
+        if s.isnull().sum() == 0:
             score += 3
 
-        if "id" in col.lower().replace(" ", ""):
+        if "id" in col.lower():
             score += 5
 
-        if str(series.dtype).startswith(("int", "float")):
+        if str(s.dtype).startswith(("int", "float")):
             score += 2
 
         if score > 0:
@@ -45,66 +46,40 @@ def detect_primary_key(df: pd.DataFrame):
     return candidates[0][0]
 
 
-# ----------------------------------------------------------
-# 🔥 FOREIGN KEY DETECTION
-# ----------------------------------------------------------
-def detect_foreign_keys(tables, pk_map):
-    fk_relations = []
+# ===================================================================
+# 📌 Validate PK before applying
+# ===================================================================
+def is_valid_primary_key(df: pd.DataFrame, col: str):
+    if col is None:
+        return False
 
-    for child_table, child_df in tables.items():
-        for child_col in child_df.columns:
+    s = df[col]
 
-            child_series = child_df[child_col]
+    # No duplicates
+    if s.nunique(dropna=True) != len(s):
+        return False
 
-            for parent_table, parent_df in tables.items():
-                parent_pk = pk_map[parent_table]
+    # No nulls
+    if s.isnull().any():
+        return False
 
-                if child_table == parent_table:
-                    continue
-
-                score = 0
-
-                # name similarity
-                if parent_pk.lower() in child_col.lower():
-                    score += 5
-
-                # % match instead of full match
-                parent_values = parent_df[parent_pk].dropna().astype(str)
-                child_values = child_series.dropna().astype(str)
-
-                match_ratio = child_values.isin(parent_values).mean()
-
-                if match_ratio >= 0.70:   # 70% of rows match
-                    score += 10
-
-                # repeating values in child = typical FK property
-                if child_series.nunique() < len(child_series):
-                    score += 2
-
-                if score >= 10:
-                    fk_relations.append({
-                        "child_table": child_table,
-                        "child_column": child_col,
-                        "parent_table": parent_table,
-                        "parent_pk": parent_pk
-                    })
-
-    return fk_relations
+    return True
 
 
-
-# ----------------------------------------------------------
-# 🔥 SQL BUILDER
-# ----------------------------------------------------------
+# ===================================================================
+# 📌 Build CREATE TABLE SQL
+# ===================================================================
 def build_create_table_sql(table_name, df, pk=None):
     cols = []
 
     for col, dtype in df.dtypes.items():
-        safe_col = col.replace('"', '').replace(" ", "_")
+        safe = col.replace('"', "")
         sql_type = pandas_dtype_to_sql(dtype)
-        stmt = f'"{safe_col}" {sql_type}'
-        if pk and safe_col == pk:
-            stmt += " PRIMARY KEY"
-        cols.append(stmt)
+
+        line = f'"{safe}" {sql_type}'
+        if pk and safe == pk:
+            line += " PRIMARY KEY"
+
+        cols.append(line)
 
     return f'CREATE TABLE IF NOT EXISTS "{table_name}" ({", ".join(cols)});'

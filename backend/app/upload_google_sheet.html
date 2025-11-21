@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Google Sheet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+  <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
+    <h1 class="text-2xl font-bold mb-4 text-center text-green-600">
+      Upload Google Sheet
+    </h1>
+
+    <form id="uploadForm" class="space-y-4">
+
+      <div>
+        <label class="font-semibold">Google Sheet URL</label>
+        <input 
+          type="text" 
+          id="sheet_url" 
+          placeholder="https://docs.google.com/spreadsheets/d/..."
+          class="block w-full border p-2 rounded"
+          required
+        />
+      </div>
+
+      <div>
+        <label class="font-semibold">Table Name</label>
+        <input 
+          type="text" 
+          id="table_name" 
+          placeholder="Enter table name"
+          class="block w-full border p-2 rounded"
+          required
+        />
+      </div>
+
+      <button 
+        type="submit" 
+        class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+        Upload
+      </button>
+    </form>
+
+    <div id="result" class="mt-4 text-sm"></div>
+  </div>
+
+<script>
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const sheetURL = document.getElementById("sheet_url").value.trim();
+    const tableName = document.getElementById("table_name").value.trim();
+
+    let formData = new FormData();
+    formData.append("sheet_url", sheetURL);
+    formData.append("table_name", tableName);
+
+    let res = await fetch("http://127.0.0.1:8000/upload-sheet", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+    document.getElementById("result").innerHTML =
+        "<pre class='bg-gray-800 text-white p-3 rounded'>" 
+        + JSON.stringify(data, null, 2) + "</pre>";
+});
+</script>
+
+</body>
+</html>
